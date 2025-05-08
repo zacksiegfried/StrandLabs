@@ -10,4 +10,10 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+### Running pipeline with Nextflow
+```
+nextflow run pipeline/main.nf -profile test
+```
+
 ## p-Score Algorithm
