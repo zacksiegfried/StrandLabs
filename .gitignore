@@ -180,3 +180,5 @@ results/
 .pipeline_work/
 work/
 *.log
+data/
+output/
