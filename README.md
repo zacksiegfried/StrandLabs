@@ -1,6 +1,4 @@
-![screenshot](assets/RainStreamLogo2.png)
-
-# RainStream is a program to statistically analyze DNA variant files
+# StrandLabs is a place to analyze DNA
 
 #### Basic set up guide
 - Clone repo onto own machine
@@ -16,5 +14,3 @@ pip install -r requirements.txt
 ```
 nextflow run pipeline/main.nf -profile test
 ```
-
-## p-Score Algorithm
