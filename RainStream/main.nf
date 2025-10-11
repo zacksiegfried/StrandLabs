@@ -5,6 +5,8 @@ nextflow.enable.dsl=2
 process MERGE_DATA {
     tag ""
 
+    publishDir "${workflow.projectDir}/data", mode: 'copy'
+
     input:
     path clinical_csv
     path methylation_csv
@@ -12,8 +14,6 @@ process MERGE_DATA {
 
     output:
     path "merged_data*.csv"
-
-    publishDir "${workflow.projectDir}/data", mode: 'copy'
 
     script:
     """
