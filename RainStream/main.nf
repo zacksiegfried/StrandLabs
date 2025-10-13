@@ -24,15 +24,38 @@ process MERGE_DATA {
         ${trimmed_flag ? "--trimmed" : ""}
     """
 }
+
+process SUMMARIZE_REPS {
+    tag ""
+
+    publishDir "${workflow.projectDir}/data", mode: 'copy'
+
+    input:
+    path merged_trim_csv
+
+    output:
+    path "merged_data_trim_condensed.csv"
+
+    script:
+    """
+    python3 ${workflow.projectDir}/src/rep_handling.py \
+        --input ${merged_trim_csv} \
+        --output .
+    """
+}
+
 workflow {
     // Channels pointing to the input CSVs
     clinical_ch = Channel.fromPath('data/clinical.csv')
     methylation_ch = Channel.fromPath('data/methylation.csv')
 
     // Run the preprocessing process
-    MERGE_DATA(
+    merged_data_trim = MERGE_DATA(
         clinical_ch,
         methylation_ch,
         params.trimmed
     )
+
+    // Run the summarize replicates process
+    SUMMARIZE_REPS(merged_data_trim)
 }
