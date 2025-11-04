@@ -1,6 +1,5 @@
 # RainStream is a tool to predict tissue of origin for cancer using methylation signature
 
-## Running indivdual python scripts outside of Nextflow pipeline must be done from project root
+Running main.nf pipeline
 
-#### Run in CLI to clean Nextflow work files
-```rm -rf work .nextflow .nextflow.log*```
+## Running indivdual python scripts outside of Nextflow pipeline must be done from project root

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-data_processing.py
+methyl_data_processing.py
 ------------------
 
 Input:
     - data/clinical.csv : patient clinical metadata 
         Columns: subjid, CANCER_TYPE, cancer_yn, stage, AGE, SEX_D
     - data/methylation.csv : patient methylation data, long format 3 reps per patient
-        Columns: Study_Subject_ID, Study, mdm, log, strands
+        Columns: Study_Subject_ID, Study, mdm, log
 
 
 Output:
-    - data/merged_data.csv : cleaned, merged table with all replicates retained
+    - data/methyl_data.csv or data/methyl_data_trim.csv : cleaned, merged table with all replicates retained
 """
 
 import pandas as pd
@@ -46,13 +46,13 @@ def methylation_merge(clinical_data_path: str, methylation_data_path: str, outpu
 
     # Optional: trim to core columns
     if trimmed:
-        core_cols = ['Study_Subject_ID', 'Study', 'mdm', 'log', 'strands',
+        core_cols = ['Study_Subject_ID', 'Study', 'mdm', 'log',
                      'CANCER_TYPE', 'cancer_yn', 'stage', 'AGE', 'SEX_D']
         merged_df = merged_df[[c for c in core_cols if c in merged_df.columns]]
 
 
     # --- Save output ---
-    output_file = Path(output_path) / ("merged_data_trim.csv" if trimmed else "merged_data.csv")
+    output_file = Path(output_path) / ("methyl_data_trim.csv" if trimmed else "methyl_data.csv")
     output_file.parent.mkdir(parents=True, exist_ok=True)
     merged_df.to_csv(output_file, index=False)
     print(f"✅ Saved to {output_file}")
@@ -65,7 +65,8 @@ if __name__ == "__main__":
     parser.add_argument("--clinical", required=True, help="Path of clincial data")
     parser.add_argument("--methylation", required=True, help="Path of methylation data")
     parser.add_argument("--output", default="data", required=True, help="Path of output folder")
-    parser.add_argument("--trimmed", action="store_true")
+    parser.add_argument("--no-trim", dest="trimmed", action="store_false", default=True,
+                        help="Disable trimming to output all columns (default: trimmed)")
     args = parser.parse_args()
 
     methylation_merge(args.clinical, args.methylation, args.output, args.trimmed)

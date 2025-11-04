@@ -2,7 +2,7 @@
 
 nextflow.enable.dsl=2
 
-process MERGE_DATA {
+process METHYL_MERGE_DATA {
     tag ""
 
     publishDir "${workflow.projectDir}/data", mode: 'copy'
@@ -10,37 +10,78 @@ process MERGE_DATA {
     input:
     path clinical_csv
     path methylation_csv
-    val trimmed_flag
 
     output:
-    path "merged_data*.csv"
+    path "methyl_data_trim.csv"
 
     script:
     """
-    python3 ${workflow.projectDir}/src/data_processing.py \
+    python3 ${workflow.projectDir}/src/methyl_data_processing.py \
         --clinical ${clinical_csv} \
         --methylation ${methylation_csv} \
-        --output . \
-        ${trimmed_flag ? "--trimmed" : ""}
+        --output .
     """
 }
 
-process SUMMARIZE_REPS {
+
+process METHYL_SUMMARIZE_REPS {
     tag ""
 
     publishDir "${workflow.projectDir}/data", mode: 'copy'
 
     input:
-    path merged_trim_csv
+    path methyl_trim_csv
 
     output:
-    path "merged_data_trim_condensed.csv"
+    path "methyl_data_trim_condensed.csv"
 
     script:
     """
-    python3 ${workflow.projectDir}/src/rep_handling.py \
-        --input ${merged_trim_csv} \
+    python3 ${workflow.projectDir}/src/methyl_rep_handling.py \
+        --input ${methyl_trim_csv} \
         --output .
+    """
+}
+
+
+process METHYL_WIDE_FORMAT {
+    tag ""
+
+    publishDir "${workflow.projectDir}/data", mode: 'copy'
+
+    input:
+    path methyl_condensed_csv
+
+    output:
+    path "methyl_data_wide.csv"
+
+    script:
+    """
+    python3 ${workflow.projectDir}/src/methyl_wide_formatting.py \
+        --input ${methyl_condensed_csv} \
+        --output .
+    """
+}
+
+
+process METHYL_FEATURE_SELECTION {
+    tag ""
+
+    publishDir "${workflow.projectDir}/output", mode: 'copy'
+
+    input:
+    path methyl_wide_csv
+
+    output:
+    path "feature_importance_scores.csv"
+    path "top_markers_plot.png", optional: true
+
+    script:
+    """
+    python3 ${workflow.projectDir}/src/methyl_feature_selection.py \
+        --input ${methyl_wide_csv} \
+        --output . \
+        --plot
     """
 }
 
@@ -50,12 +91,17 @@ workflow {
     methylation_ch = Channel.fromPath('data/methylation.csv')
 
     // Run the preprocessing process
-    merged_data_trim = MERGE_DATA(
+    methyl_data_trim = METHYL_MERGE_DATA(
         clinical_ch,
-        methylation_ch,
-        params.trimmed
+        methylation_ch
     )
 
     // Run the summarize replicates process
-    SUMMARIZE_REPS(merged_data_trim)
+    methyl_data_condensed = METHYL_SUMMARIZE_REPS(methyl_data_trim)
+
+    // Run the wide format conversion process
+    methyl_data_wide = METHYL_WIDE_FORMAT(methyl_data_condensed)
+    
+    // Add feature selection
+    METHYL_FEATURE_SELECTION(methyl_data_wide)
 }
