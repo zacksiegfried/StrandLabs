@@ -44,6 +44,9 @@ def methylation_merge(clinical_data_path: str, methylation_data_path: str, outpu
     merged_df = merged_df.dropna(subset=['subjid'])
     print(f"Dropped {before - len(merged_df)} methylation records with no clinical match.")
 
+    # Floor negative log values to 0
+    merged_df['log'] = merged_df['log'].clip(lower=0)
+
     # Optional: trim to core columns
     if trimmed:
         core_cols = ['Study_Subject_ID', 'Study', 'mdm', 'log',
