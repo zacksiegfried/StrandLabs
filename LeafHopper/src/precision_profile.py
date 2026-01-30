@@ -95,18 +95,19 @@ def compute_precision_stats(df: pd.DataFrame, sdmc_col: str, mutid_col: str,
         sdmc_col: ['mean', 'std', 'count']
     }).reset_index()
 
-    stats.columns = ['donor', 'mutid', 'group', 'mean_sdmc', 'std_sdmc', 'n_obs']
+    stats.columns = ['donor', 'mutid', 'group', 'mean_value', 'std_value', 'n_obs']
 
     # Calculate %CV (coefficient of variation)
-    stats['cv_percent'] = (stats['std_sdmc'] / stats['mean_sdmc']) * 100
+    stats['cv_percent'] = (stats['std_value'] / stats['mean_value']) * 100
 
     # Remove rows with zero mean, zero std, or single observation
-    stats = stats[(stats['mean_sdmc'] > 0) & (stats['std_sdmc'] > 0) & (stats['n_obs'] > 1)].copy()
+    stats = stats[(stats['mean_value'] > 0) & (stats['std_value'] > 0) & (stats['n_obs'] > 1)].copy()
 
     return stats
 
 
-def plot_variant_precision(stats: pd.DataFrame, variant: str, output_path: Path, donors: list):
+def plot_variant_precision(stats: pd.DataFrame, variant: str, output_path: Path,
+                           donors: list, quant_col: str):
     """Generate precision profile scatter plot for a single variant."""
 
     variant_stats = stats[stats['mutid'] == variant]
@@ -120,8 +121,8 @@ def plot_variant_precision(stats: pd.DataFrame, variant: str, output_path: Path,
     default_colors = plt.cm.tab10(np.linspace(0, 1, len(donors)))
 
     # Get x range for fitting curves
-    x_min = variant_stats['mean_sdmc'].min()
-    x_max = variant_stats['mean_sdmc'].max()
+    x_min = variant_stats['mean_value'].min()
+    x_max = variant_stats['mean_value'].max()
     x_line = np.linspace(max(x_min, 0.1), x_max, 100)
 
     for i, donor in enumerate(donors):
@@ -133,7 +134,7 @@ def plot_variant_precision(stats: pd.DataFrame, variant: str, output_path: Path,
 
         # Plot scatter points
         ax.scatter(
-            donor_stats['mean_sdmc'],
+            donor_stats['mean_value'],
             donor_stats['cv_percent'],
             label=f"{donor} (n={len(donor_stats)})",
             alpha=0.7,
@@ -143,7 +144,7 @@ def plot_variant_precision(stats: pd.DataFrame, variant: str, output_path: Path,
 
         # Fit and plot power curve y = a * x^b
         if len(donor_stats) >= 3:
-            x_data = donor_stats['mean_sdmc'].values
+            x_data = donor_stats['mean_value'].values
             y_data = donor_stats['cv_percent'].values
 
             # Filter out zeros/negatives for fitting
@@ -158,7 +159,9 @@ def plot_variant_precision(stats: pd.DataFrame, variant: str, output_path: Path,
                 except (RuntimeError, ValueError):
                     pass  # Skip curve if fitting fails
 
-    ax.set_xlabel('Mean Super Duplex Mutant Count', fontsize=12)
+    # Format column name for display (replace underscores with spaces, title case)
+    x_label = f"Mean {quant_col.replace('_', ' ').title()}"
+    ax.set_xlabel(x_label, fontsize=12)
     ax.set_ylabel('Coefficient of Variation (%)', fontsize=12)
     ax.set_title(f'Precision Profile: {variant}', fontsize=14)
     ax.legend(title='Donor ID')
@@ -210,7 +213,7 @@ def main():
         safe_name = str(variant).replace(':', '_').replace('/', '_').replace(' ', '_')
         plot_path = plots_dir / f"{args.prefix}_{safe_name}.png"
 
-        if plot_variant_precision(stats, variant, plot_path, args.donors):
+        if plot_variant_precision(stats, variant, plot_path, args.donors, args.sdmc_col):
             plot_count += 1
 
     print(f"Saved {plot_count} plots to {plots_dir}")
