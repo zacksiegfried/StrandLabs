@@ -2,7 +2,6 @@
 
 nextflow.enable.dsl=2
 
-
 process PRECISION_PROFILE {
     tag "${input_csv.simpleName}"
 
