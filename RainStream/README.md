@@ -1,6 +1,15 @@
 # RainStream is a tool to predict tissue of origin of cancer using methylation signature
 
-## Running indivdual python scripts outside of Nextflow pipeline must be done from project root
+## Running the Pipeline
+
+```
+source ../.venv/bin/activate
+nextflow run main.nf
+
+bash cleanup.sh
+```
+
+### Running individual python scripts outside of Nextflow pipeline must be done from project root
 
 ## Data Processing Pipeline
 
@@ -22,3 +31,9 @@ Pivots data so each methylation marker becomes a column.
 ### 4. Feature Selection (`methyl_feature_selection.py`)
 Ranks markers by importance using ANOVA F-test, Random Forest, and Logistic Regression.
 - **Output**: `feature_importance_scores.csv`
+
+## Analysis Output
+
+### Marker Precision Profiles (`methyl_precision_profile.py`)
+Runs in parallel from Step 1. Models the precision of each marker across the quantitative measuring range. Summary statistics computed on replicates of same sample.
+- **Output**: `marker_precision_profiles/*.png`

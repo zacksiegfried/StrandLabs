@@ -64,6 +64,28 @@ process METHYL_WIDE_FORMAT {
 }
 
 
+process METHYL_PRECISION_PROFILE {
+    tag ""
+
+    publishDir "${workflow.projectDir}/output", mode: 'copy'
+
+    input:
+    path methyl_trim_csv
+
+    output:
+    path "methyl_precision_profile_data.csv"
+    path "marker_precision_profiles/*.png", optional: true
+
+    script:
+    """
+    python3 ${workflow.projectDir}/src/methyl_precision_profile.py \
+        --input ${methyl_trim_csv} \
+        --output . \
+        --plot
+    """
+}
+
+
 process METHYL_FEATURE_SELECTION {
     tag ""
 
@@ -95,6 +117,9 @@ workflow {
         clinical_ch,
         methylation_ch
     )
+
+    // Assess precision across analytical measuring range (uses replicate-level data)
+    METHYL_PRECISION_PROFILE(methyl_data_trim)
 
     // Run the summarize replicates process
     methyl_data_condensed = METHYL_SUMMARIZE_REPS(methyl_data_trim)
