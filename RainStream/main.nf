@@ -107,6 +107,52 @@ process METHYL_FEATURE_SELECTION {
     """
 }
 
+
+process METHYL_CANCER_DETECTION {
+    tag ""
+
+    publishDir "${workflow.projectDir}/output", mode: 'copy'
+
+    input:
+    path methyl_wide_csv
+
+    output:
+    path "cancer_detection_predictions.csv"
+    path "cancer_detection_model_summary.csv"
+    path "cancer_detection_roc_curve.png", optional: true
+
+    script:
+    """
+    python3 ${workflow.projectDir}/src/methyl_cancer_detection.py \
+        --input ${methyl_wide_csv} \
+        --output . \
+        --plot
+    """
+}
+
+
+process METHYL_CANCER_TYPE {
+    tag ""
+
+    publishDir "${workflow.projectDir}/output", mode: 'copy'
+
+    input:
+    path methyl_wide_csv
+
+    output:
+    path "cancer_type_predictions.csv"
+    path "cancer_type_model_summary.csv"
+    path "cancer_type_confusion_matrix.png", optional: true
+
+    script:
+    """
+    python3 ${workflow.projectDir}/src/cancer_type_classification.py \
+        --input ${methyl_wide_csv} \
+        --output . \
+        --plot
+    """
+}
+
 workflow {
     // Channels pointing to the input CSVs
     clinical_ch = Channel.fromPath('data/clinical.csv')
@@ -127,6 +173,12 @@ workflow {
     // Run the wide format conversion process
     methyl_data_wide = METHYL_WIDE_FORMAT(methyl_data_condensed)
     
-    // Add feature selection
+    // Rank markers by importance against cancer_yn
     METHYL_FEATURE_SELECTION(methyl_data_wide)
+
+    // Stage 1: binary cancer / non-cancer classifier
+    METHYL_CANCER_DETECTION(methyl_data_wide)
+
+    // Stage 2: tissue of origin classifier (cancer samples only)
+    METHYL_CANCER_TYPE(methyl_data_wide)
 }

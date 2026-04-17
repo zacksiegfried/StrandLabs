@@ -44,6 +44,11 @@ def methylation_merge(clinical_data_path: str, methylation_data_path: str, outpu
     merged_df = merged_df.dropna(subset=['subjid'])
     print(f"Dropped {before - len(merged_df)} methylation records with no clinical match.")
 
+    # Exclude B3GALT6 and all its multiplexes (QC readout, not an analyte)
+    before = len(merged_df)
+    merged_df = merged_df[~merged_df['mdm'].fillna('').str.startswith('B3GALT6')]
+    print(f"Excluded {before - len(merged_df)} B3GALT6 rows (QC marker).")
+
     # Floor negative log values to 0
     merged_df['log'] = merged_df['log'].clip(lower=0)
 
