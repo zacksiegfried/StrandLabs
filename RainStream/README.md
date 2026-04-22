@@ -13,11 +13,9 @@ bash cleanup.sh
 
 ## Data Processing Pipeline
 
-The pipeline transforms raw methylation data through four sequential stages:
-
 ### 1. Data Merge (`methyl_data_processing.py`)
 Joins methylation measurements with clinical metadata. Filters B3GALT6 out.
-- **Input**: `clinical.csv` (patient metadata), `methylation.csv` (long-format, 3 reps/patient)
+- **Input**: `clinical.csv` (patient metadata), `methylation.csv` (long-format)
 - **Output**: `methyl_data_trim.csv`
 
 ### 2. Replicate Handling (`methyl_rep_handling.py`)
